@@ -1,0 +1,23 @@
+{
+
+  "description": "Adds a page action to make tables sortable.",
+  "manifest_version": 2,
+  "name": "sortable",
+  "version": "1.0",
+  "homepage_url": "https://github.com/danielheath/sortable",
+
+  "background": {
+    "scripts": ["background.js"]
+  },
+
+  "page_action": {
+    "default_icon": "icons/off.svg",
+    "browser_style": true
+  },
+
+  "permissions": [
+    "activeTab",
+    "tabs"
+  ]
+
+}
