@@ -1,42 +1,97 @@
 const JS = `
+
 function rev(sortFn) {
   return function(a, b) { return sortFn(b, a) }
 }
+function coresortable(a, b) {
+  let amatch = a.match(/^\\d+([^\\d]\\d+)*/g)
+  let bmatch = b.match(/^\\d+([^\\d]\\d+)*/g)
+  if (!amatch) {
+    return a.localeCompare(b);
+  }
+  if (!bmatch) {
+    return a.localeCompare(b);
+  }
+
+  let aparts = amatch[0].split(/[^\\d]/)
+  let bparts = bmatch[0].split(/[^\\d]/)
+  if (aparts.length != bparts.length) {
+    return aparts.length - bparts.length;
+  }
+  for (let i = 0; i < aparts.length; i++) {
+    if (parseInt(aparts[i]) != parseInt(bparts[i])) {
+      return parseInt(aparts[i]) - parseInt(bparts[i])
+    }
+  }
+  return 0
+}
+
 document.querySelectorAll('table').forEach((table) => {
   let currentSort;
   let reverse = false;
   function sort(rowa, rowb) {
-
     let a = rowa.children[currentSort].innerText;
     let b = rowb.children[currentSort].innerText;
-
-    if (isNaN(parseFloat(a)) || isNaN(parseFloat(b))) {
-      return a.localeCompare(b);
-    }
-    return parseFloat(a) - parseFloat(b);
+    return coresortable(a, b)
   }
 
+  let testruns = []
+  function test(label, a, b, expected) {
+    let result = coresortable(a, b)
 
+    if (result > 0) {
+      result = 1
+    }
+    if (result < 0) {
+      result = -1
+    }
+
+    if (result !== expected) {
+      debugger
+      coresortable(a, b)
+    }
+
+    testruns.push({
+      label,
+      a,
+      b,
+      result,
+      expected,
+      success: result === expected
+    })
+  }
+  test("number", "1", "2", -1)
+  test("ip address1", "1.1.1.1", "1.1.8.8", -1)
+  test("ip address2", "1.250.1.1", "1.1.8.8", 1)
+  test("thousand separator", "1,000,000.05", "2", 1)
+  test("german thousand separator", "1.000.000,05", "2", 1)
+  test("just text", "the quick brown fox", "the slow brown fox", -1)
+  test("fraction", "1/100", "1/1000", -1)
+  console.table(testruns)
   header = table.querySelector('tr')
+  let parentNode = table.querySelector('tbody');
   Array.from(header.children).map((child, idx) => {
-    child.onclick = function onChildClick() {
+
+    child.onclick = function onChildClick(e) {
+      e.stopPropagation()
+      e.stopImmediatePropagation()
+      e.preventDefault()
       if (currentSort == idx) {
         reverse = !reverse
       } else {
         reverse = false
       }
       currentSort = idx
-
-      rows = Array.from(table.querySelectorAll('tr'))
-      let parentNode = rows[0].parentNode;
-      rows.shift() // remove header row
+      rows = Array.from(table.querySelectorAll(':scope > tbody > tr'))
       if (reverse) {
         rows.sort(rev(sort))
       } else {
         rows.sort(sort)
       }
 
-      rows.forEach((row) => parentNode.insertBefore(row, null))
+      rows.forEach((row) => {
+        parentNode.insertBefore(row, null)
+      })
     }
   })
 })
